@@ -9,3 +9,4 @@ Tf = 10.0
 Nx = 40
 Ny = 40
 dt = 0.01
+Solver = "BiCGstab"

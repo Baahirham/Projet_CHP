@@ -23,7 +23,7 @@ DataFile::DataFile(std::string file_name)
    this->_Nx = toml::find<int>(parameter, "Nx");
    this->_Ny = toml::find<int>(parameter, "Ny");
    this->_dt = toml::find<double>(parameter, "dt");
-
+   this->_solver = toml::find<std::string>(parameter, "Solver");
 }
 
 #define _DATA_FILE_CPP

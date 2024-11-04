@@ -14,6 +14,7 @@ class DataFile {
       int _cas, _Nx, _Ny; 
       double _xmin, _xmax, _ymin, _ymax, _D, _Tf;
       double _dx, _dy, _dt;
+      std::string _solver;
 
 
    public: // Méthodes et opérateurs de la classe
@@ -31,6 +32,7 @@ class DataFile {
    const double Get_dx() const {return (_xmax - _xmin)/(double(_Nx));};
    const double Get_dy() const {return (_ymax - _ymin)/(double(_Ny));};
    const double Get_dt() const {return _dt;};
+   const std::string Get_Solver() const {return _solver;};
    
 };
 

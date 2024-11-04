@@ -29,8 +29,24 @@ TimeScheme(df, lap)
 }
 
 std::vector<double> ImplicitScheme::Jacobi(const std::vector<double> &U, const std::vector<double> &F){
-    std::vector<double> x(U.size());
-    //  A faire
+    std::vector<double> x(U.size()), r(U.size());
+    int Nx(_df->Get_Nx()), Ny(_df->Get_Ny());
+    double dx(_df->Get_dx()), dy(_df->Get_dy()), xmin(_df->Get_xmin()), ymin(_df->Get_ymin()); 
+    double dt(_df->Get_dt()), D(_df->Get_D());
+    double a(1.0 + 2.0*dt*D*(1.0/(dx*dx) + 1.0/(dy*dy))), b(-D*dt/(dx*dx)), c(-D*dt/(dy*dy));
+    int Nmax(10000), it(0);
+    x = U;
+    r = SubVector(AddVector(U,MultiplyBy(F,dt)),_lap->MatVecProd(x));
+    while ((it < Nmax) && (std::sqrt(DotProduct(r,r))/std::sqrt(DotProduct(AddVector(U,MultiplyBy(F,dt)),AddVector(U,MultiplyBy(F,dt)))) > 1e-12)){
+        x = AddVector(x,MultiplyBy(r,(1.0/a)));
+        r = SubVector(AddVector(U,MultiplyBy(F,dt)),_lap->MatVecProd(x));
+        ++it;
+    }
+
+    if (it >= Nmax){
+        std::cout << "Pas de convergence" << std::endl;
+    }
+
     return x;
 }
 
@@ -88,7 +104,12 @@ std::vector<double> ImplicitScheme::BiCGstab(std::vector<double> &U, const std::
 
 void ImplicitScheme::Integrate(double &t, std::vector<double> &U){
     t += _df->Get_dt();
-    U = BiCGstab(U, _lap->RHS(t));
+    if (_df->Get_Solver() == "Jacobi"){
+        U = Jacobi(U, _lap->RHS(t));
+    } 
+    else if (_df->Get_Solver() == "BiCGstab"){
+        U = BiCGstab(U, _lap->RHS(t));
+    }
 }
 
 #define _TIME_SCHEME_CPP
