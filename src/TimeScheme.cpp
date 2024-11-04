@@ -33,7 +33,7 @@ std::vector<double> ImplicitScheme::Jacobi(const std::vector<double> &U, const s
     int Nx(_df->Get_Nx()), Ny(_df->Get_Ny());
     double dx(_df->Get_dx()), dy(_df->Get_dy()), xmin(_df->Get_xmin()), ymin(_df->Get_ymin()); 
     double dt(_df->Get_dt()), D(_df->Get_D());
-    double a(1.0 + 2.0*dt*D*(1.0/(dx*dx) + 1.0/(dy*dy))), b(-D*dt/(dx*dx)), c(-D*dt/(dy*dy));
+    double a(1.0 + 2.0*dt*D*(1.0/(dx*dx) + 1.0/(dy*dy)));
     int Nmax(10000), it(0);
     x = U;
     r = SubVector(AddVector(U,MultiplyBy(F,dt)),_lap->MatVecProd(x));
@@ -51,8 +51,41 @@ std::vector<double> ImplicitScheme::Jacobi(const std::vector<double> &U, const s
 }
 
 std::vector<double> ImplicitScheme::CG(const std::vector<double> &U, const std::vector<double> &F){
-    std::vector<double> x(U.size());
-    //  A faire
+    std::vector<double> x(U.size()), r(U.size()), z(U.size()), p(U.size()), q(U.size());
+    double rho, rho0, alpha, delta, gamma;
+    int Nmax(10000), k(0);
+    double dt(_df->Get_dt());
+    x = U;
+    r = SubVector(AddVector(U,MultiplyBy(F,dt)),_lap->MatVecProd(x));
+    while ((k < Nmax) && (std::sqrt(DotProduct(r,r))/std::sqrt(DotProduct(AddVector(U,MultiplyBy(F,dt)),AddVector(U,MultiplyBy(F,dt)))) > 1e-12)){
+        z = r;
+        rho = DotProduct(r,z);
+        if (rho == 0.0){
+            std::cout << "Pas de convergence" << std::endl;
+        }
+        if (k == 0){
+            p = z;
+        }
+        else{
+            gamma = rho/rho0;
+            p = AddVector(MultiplyBy(p,gamma),z);
+        }
+        q = _lap->MatVecProd(p);
+        delta = DotProduct(p,q);
+        if (delta == 0.0){
+            std::cout << "Pas de convergence" << std::endl;
+        }
+        alpha = rho/delta;
+        x = AddVector(x,MultiplyBy(p,alpha));
+        r = SubVector(r,MultiplyBy(q,alpha));
+        rho0 = rho;
+        ++k;
+    }
+
+    if (k >= Nmax){
+        std::cout << "Pas de convergence" << std::endl;
+    }
+
     return x;
 }
 
@@ -75,7 +108,6 @@ std::vector<double> ImplicitScheme::BiCGstab(std::vector<double> &U, const std::
         s = SubVector(r,MultiplyBy(nu,alpha));
         if (sqrt(DotProduct(s,s)) <= 1.e-12){
             x = h;
-            // std::cout << "it = " << k << std::endl;
             return x;
         }
         t1 = _lap->MatVecProd(s);
@@ -84,7 +116,6 @@ std::vector<double> ImplicitScheme::BiCGstab(std::vector<double> &U, const std::
         r_old = r;
         r = SubVector(s,MultiplyBy(t1,omega));
         if (sqrt(DotProduct(r,r)) <= 1.e-12) {
-            // std::cout << "it = " << k << std::endl;
             return x;
         }
         rho_old = rho;
@@ -95,7 +126,6 @@ std::vector<double> ImplicitScheme::BiCGstab(std::vector<double> &U, const std::
         k++;
     }
 
-    // std::cout << "it = " << k << std::endl;
     if (k >= Nmax){
         std::cout << "Pas de convergence" << std::endl;
     }
@@ -109,6 +139,12 @@ void ImplicitScheme::Integrate(double &t, std::vector<double> &U){
     } 
     else if (_df->Get_Solver() == "BiCGstab"){
         U = BiCGstab(U, _lap->RHS(t));
+    }
+    else if (_df->Get_Solver() == "CG"){
+        U = CG(U, _lap->RHS(t));
+    }
+    else{
+        std::cout << "Pas de solveur" << std::endl;
     }
 }
 
