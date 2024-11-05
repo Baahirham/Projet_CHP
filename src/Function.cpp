@@ -37,7 +37,7 @@ double Function::Exact_solution(const double x, const double y, const double t) 
 {
    if (_df->Get_cas() == 0)
    {
-      double pi(3.14159265358979323846264338327950288);
+      double pi(std::acos(-1.0));
       double xmax(_df->Get_xmax()), ymax(_df->Get_ymax()), xmin(_df->Get_xmin()), ymin(_df->Get_ymin()); 
       return t*sin(2.0*pi*x/(_df->Get_xmax()-_df->Get_xmin()))*sin(2.0*pi*y/(_df->Get_ymax()-_df->Get_ymin()));
    }
@@ -61,7 +61,7 @@ double Function::Exact_solution(const double x, const double y, const double t) 
 
 double Function::Source(const double x, const double y, const double t) const
 {
-   double pi(3.14159265358979323846264338327950288);
+   double pi(std::acos(-1.0));
    if (_df->Get_cas() == 0)
    {
       double xmax(_df->Get_xmax()), ymax(_df->Get_ymax()), xmin(_df->Get_xmin()), ymin(_df->Get_ymin()); 
